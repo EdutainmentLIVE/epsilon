@@ -37,7 +37,7 @@ fieldNameOptions
   :: Ghc.SrcSpan -> [Console.OptDescr (String -> Ghc.Hsc String)]
 fieldNameOptions srcSpan =
   [ Console.Option [] ["kebab"] (Console.NoArg $ pure . kebab) ""
-  , Console.Option [] ["lower"] (Console.NoArg $ pure . lower) ""
+  , Console.Option [] ["camel"] (Console.NoArg $ pure . lower) ""
   , Console.Option [] ["snake"] (Console.NoArg $ pure . snake) ""
   , Console.Option
     []
@@ -55,7 +55,7 @@ fieldNameOptions srcSpan =
       "PREFIX"
     )
     ""
-  , Console.Option [] ["upper"] (Console.NoArg $ pure . upper) ""
+  , Console.Option [] ["title"] (Console.NoArg $ pure . upper) ""
   ]
 
 -- | Applies all the monadic functions in order beginning with some starting
