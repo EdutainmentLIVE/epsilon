@@ -1,6 +1,7 @@
 module Epsilon.Type.Type
   ( Type(..)
   , make
+  , qualifiedName
   ) where
 
 import qualified Control.Monad as Monad
@@ -35,3 +36,10 @@ make lIdP lHsQTyVars lConDecls srcSpan = do
     , variables = theVariables
     , constructors = theConstructors
     }
+
+qualifiedName :: Ghc.ModuleName -> Type -> String
+qualifiedName moduleName type_ = mconcat
+  [ Ghc.moduleNameString moduleName
+  , "."
+  , Ghc.occNameString . Ghc.rdrNameOcc $ name type_
+  ]

@@ -14,7 +14,7 @@ import qualified GHC.Hs as Ghc
 import qualified GhcPlugins as Ghc
 
 generate :: Common.Generator
-generate _ lIdP lHsQTyVars lConDecls options srcSpan = do
+generate moduleName lIdP lHsQTyVars lConDecls options srcSpan = do
   type_ <- Type.make lIdP lHsQTyVars lConDecls srcSpan
   constructor <- case Type.constructors type_ of
     [x] -> pure x
@@ -79,9 +79,7 @@ generate _ lIdP lHsQTyVars lConDecls options srcSpan = do
                 (Hs.qualVar srcSpan aeson $ Ghc.mkVarOcc "withObject")
             . Hs.lit srcSpan
             . Hs.string
-            . Ghc.occNameString
-            . Ghc.rdrNameOcc
-            $ Type.name type_
+            $ Type.qualifiedName moduleName type_
             )
         . Hs.par srcSpan
         . Hs.lam srcSpan
