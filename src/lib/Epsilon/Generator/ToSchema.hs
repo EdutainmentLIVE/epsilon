@@ -122,15 +122,17 @@ generate moduleName lIdP lHsQTyVars lConDecls options srcSpan = do
         . Hs.app
             srcSpan
             (Hs.app
-              srcSpan
-              (Hs.qualVar srcSpan swagger $ Ghc.mkDataOcc "NamedSchema")
-              . Hs.par srcSpan
-              . Hs.app srcSpan (Hs.qualVar srcSpan dataMaybe $ Ghc.mkDataOcc "Just")
-              . Hs.par srcSpan
-              . Hs.app srcSpan (Hs.qualVar srcSpan text $ Ghc.mkVarOcc "pack")
-              . Hs.lit srcSpan
-              . Hs.string
-              $ Type.qualifiedName moduleName type_
+                srcSpan
+                (Hs.qualVar srcSpan swagger $ Ghc.mkDataOcc "NamedSchema")
+            . Hs.par srcSpan
+            . Hs.app
+                srcSpan
+                (Hs.qualVar srcSpan dataMaybe $ Ghc.mkDataOcc "Just")
+            . Hs.par srcSpan
+            . Hs.app srcSpan (Hs.qualVar srcSpan text $ Ghc.mkVarOcc "pack")
+            . Hs.lit srcSpan
+            . Hs.string
+            $ Type.qualifiedName moduleName type_
             )
         . Hs.par srcSpan
         . makePipeline srcSpan lens [setType, setProperties, setRequired]

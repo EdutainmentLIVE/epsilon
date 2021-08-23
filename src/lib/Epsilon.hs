@@ -89,7 +89,10 @@ version = Version.showVersion This.version
 -- All of these functions are plumbing. If you want to skip to the interesting
 -- part, go to 'handleLHsSigType'.
 handleLHsModule
-  :: Config.Config -> Ghc.ModuleName -> LHsModule Ghc.GhcPs -> Ghc.Hsc (LHsModule Ghc.GhcPs)
+  :: Config.Config
+  -> Ghc.ModuleName
+  -> LHsModule Ghc.GhcPs
+  -> Ghc.Hsc (LHsModule Ghc.GhcPs)
 handleLHsModule config moduleName lHsModule = do
   hsModule <- handleHsModule config moduleName $ Ghc.unLoc lHsModule
   pure $ Ghc.mapLoc (const hsModule) lHsModule
@@ -105,7 +108,8 @@ handleHsModule
   -> Ghc.HsModule Ghc.GhcPs
   -> Ghc.Hsc (Ghc.HsModule Ghc.GhcPs)
 handleHsModule config moduleName hsModule = do
-  (lImportDecls, lHsDecls) <- handleLHsDecls config moduleName $ Ghc.hsmodDecls hsModule
+  (lImportDecls, lHsDecls) <- handleLHsDecls config moduleName
+    $ Ghc.hsmodDecls hsModule
   pure hsModule
     { Ghc.hsmodImports = Ghc.hsmodImports hsModule <> lImportDecls
     , Ghc.hsmodDecls = lHsDecls
@@ -129,7 +133,10 @@ handleLHsDecl
   -> Ghc.Hsc ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
 handleLHsDecl config moduleName lHsDecl = case Ghc.unLoc lHsDecl of
   Ghc.TyClD xTyClD tyClDecl1 -> do
-    (tyClDecl2, (lImportDecls, lHsDecls)) <- handleTyClDecl config moduleName tyClDecl1
+    (tyClDecl2, (lImportDecls, lHsDecls)) <- handleTyClDecl
+      config
+      moduleName
+      tyClDecl1
     pure
       ( lImportDecls
       , Ghc.mapLoc (const $ Ghc.TyClD xTyClD tyClDecl2) lHsDecl : lHsDecls
@@ -148,7 +155,8 @@ handleTyClDecl
 handleTyClDecl config moduleName tyClDecl = case tyClDecl of
   Ghc.DataDecl tcdDExt tcdLName tcdTyVars tcdFixity tcdDataDefn -> do
     (hsDataDefn, (lImportDecls, lHsDecls)) <- handleHsDataDefn
-      config moduleName
+      config
+      moduleName
       tcdLName
       tcdTyVars
       tcdDataDefn
@@ -169,27 +177,29 @@ handleHsDataDefn
        ( Ghc.HsDataDefn Ghc.GhcPs
        , ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
        )
-handleHsDataDefn config moduleName lIdP lHsQTyVars hsDataDefn = case hsDataDefn of
-  Ghc.HsDataDefn dd_ext dd_ND dd_ctxt dd_cType dd_kindSig dd_cons dd_derivs ->
-    do
-      (hsDeriving, (lImportDecls, lHsDecls)) <- handleHsDeriving
-        config moduleName
-        lIdP
-        lHsQTyVars
-        dd_cons
-        dd_derivs
-      pure
-        ( Ghc.HsDataDefn
-          dd_ext
-          dd_ND
-          dd_ctxt
-          dd_cType
-          dd_kindSig
+handleHsDataDefn config moduleName lIdP lHsQTyVars hsDataDefn =
+  case hsDataDefn of
+    Ghc.HsDataDefn dd_ext dd_ND dd_ctxt dd_cType dd_kindSig dd_cons dd_derivs
+      -> do
+        (hsDeriving, (lImportDecls, lHsDecls)) <- handleHsDeriving
+          config
+          moduleName
+          lIdP
+          lHsQTyVars
           dd_cons
-          hsDeriving
-        , (lImportDecls, lHsDecls)
-        )
-  _ -> pure (hsDataDefn, ([], []))
+          dd_derivs
+        pure
+          ( Ghc.HsDataDefn
+            dd_ext
+            dd_ND
+            dd_ctxt
+            dd_cType
+            dd_kindSig
+            dd_cons
+            hsDeriving
+          , (lImportDecls, lHsDecls)
+          )
+    _ -> pure (hsDataDefn, ([], []))
 
 -- | See 'handleLHsModule' and 'handleLHsSigType'.
 handleHsDeriving
@@ -201,7 +211,9 @@ handleHsDeriving
   -> Ghc.HsDeriving Ghc.GhcPs
   -> Ghc.Hsc
        ( Ghc.HsDeriving Ghc.GhcPs
-       , ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
+       , ( [Ghc.LImportDecl Ghc.GhcPs]
+         , [Ghc.LHsDecl Ghc.GhcPs]
+         )
        )
 handleHsDeriving config moduleName lIdP lHsQTyVars lConDecls hsDeriving = do
   (lHsDerivingClauses, (lImportDecls, lHsDecls)) <-
@@ -222,10 +234,12 @@ handleLHsDerivingClauses
   -> [Ghc.LHsDerivingClause Ghc.GhcPs]
   -> Ghc.Hsc
        ( [Ghc.LHsDerivingClause Ghc.GhcPs]
-       , ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
+       , ( [Ghc.LImportDecl Ghc.GhcPs]
+         , [Ghc.LHsDecl Ghc.GhcPs]
+         )
        )
-handleLHsDerivingClauses config moduleName lIdP lHsQTyVars lConDecls lHsDerivingClauses =
-  do
+handleLHsDerivingClauses config moduleName lIdP lHsQTyVars lConDecls lHsDerivingClauses
+  = do
     tuples <- mapM
       (handleLHsDerivingClause config moduleName lIdP lHsQTyVars lConDecls)
       lHsDerivingClauses
@@ -245,10 +259,12 @@ handleLHsDerivingClause
   -> Ghc.LHsDerivingClause Ghc.GhcPs
   -> Ghc.Hsc
        ( Maybe (Ghc.LHsDerivingClause Ghc.GhcPs)
-       , ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
+       , ( [Ghc.LImportDecl Ghc.GhcPs]
+         , [Ghc.LHsDecl Ghc.GhcPs]
+         )
        )
-handleLHsDerivingClause config moduleName lIdP lHsQTyVars lConDecls lHsDerivingClause =
-  case Ghc.unLoc lHsDerivingClause of
+handleLHsDerivingClause config moduleName lIdP lHsQTyVars lConDecls lHsDerivingClause
+  = case Ghc.unLoc lHsDerivingClause of
     Ghc.HsDerivingClause _ deriv_clause_strategy deriv_clause_tys
       | Just options <- parseDerivingStrategy deriv_clause_strategy -> do
         (lImportDecls, lHsDecls) <-
@@ -294,12 +310,15 @@ handleLHsSigTypes
   -> [String]
   -> [Ghc.LHsSigType Ghc.GhcPs]
   -> Ghc.Hsc
-       ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
-handleLHsSigTypes config moduleName lIdP lHsQTyVars lConDecls options lHsSigTypes = do
-  tuples <- mapM
-    (handleLHsSigType config moduleName lIdP lHsQTyVars lConDecls options)
-    lHsSigTypes
-  pure . Bifunctor.bimap mconcat mconcat $ unzip tuples
+       ( [Ghc.LImportDecl Ghc.GhcPs]
+       , [Ghc.LHsDecl Ghc.GhcPs]
+       )
+handleLHsSigTypes config moduleName lIdP lHsQTyVars lConDecls options lHsSigTypes
+  = do
+    tuples <- mapM
+      (handleLHsSigType config moduleName lIdP lHsQTyVars lConDecls options)
+      lHsSigTypes
+    pure . Bifunctor.bimap mconcat mconcat $ unzip tuples
 
 -- | This is the main workhorse of the plugin. By the time things get here,
 -- everything has already been plumbed correctly. (See 'handleLHsModule' for
@@ -316,24 +335,28 @@ handleLHsSigType
   -> [String]
   -> Ghc.LHsSigType Ghc.GhcPs
   -> Ghc.Hsc
-       ([Ghc.LImportDecl Ghc.GhcPs], [Ghc.LHsDecl Ghc.GhcPs])
-handleLHsSigType config moduleName lIdP lHsQTyVars lConDecls options lHsSigType = do
-  let
-    srcSpan = case lHsSigType of
-      Ghc.HsIB _ x -> Ghc.getLoc x
-      _ -> Ghc.getLoc lIdP
-  (lImportDecls, lHsDecls) <- case getGenerator lHsSigType of
-    Just generate -> generate moduleName lIdP lHsQTyVars lConDecls options srcSpan
-    Nothing -> Hsc.throwError srcSpan $ Ghc.text "unsupported type class"
+       ( [Ghc.LImportDecl Ghc.GhcPs]
+       , [Ghc.LHsDecl Ghc.GhcPs]
+       )
+handleLHsSigType config moduleName lIdP lHsQTyVars lConDecls options lHsSigType
+  = do
+    let
+      srcSpan = case lHsSigType of
+        Ghc.HsIB _ x -> Ghc.getLoc x
+        _ -> Ghc.getLoc lIdP
+    (lImportDecls, lHsDecls) <- case getGenerator lHsSigType of
+      Just generate ->
+        generate moduleName lIdP lHsQTyVars lConDecls options srcSpan
+      Nothing -> Hsc.throwError srcSpan $ Ghc.text "unsupported type class"
 
-  Monad.when (Config.verbose config) $ do
-    dynFlags <- Ghc.getDynFlags
-    IO.liftIO $ do
-      putStrLn $ replicate 80 '-'
-      mapM_ (putStrLn . Ghc.showSDocDump dynFlags . Ghc.ppr) lImportDecls
-      mapM_ (putStrLn . Ghc.showSDocDump dynFlags . Ghc.ppr) lHsDecls
+    Monad.when (Config.verbose config) $ do
+      dynFlags <- Ghc.getDynFlags
+      IO.liftIO $ do
+        putStrLn $ replicate 80 '-'
+        mapM_ (putStrLn . Ghc.showSDocDump dynFlags . Ghc.ppr) lImportDecls
+        mapM_ (putStrLn . Ghc.showSDocDump dynFlags . Ghc.ppr) lHsDecls
 
-  pure (lImportDecls, lHsDecls)
+    pure (lImportDecls, lHsDecls)
 
 getGenerator :: Ghc.LHsSigType Ghc.GhcPs -> Maybe Common.Generator
 getGenerator lHsSigType = do
