@@ -124,7 +124,15 @@ generate lIdP lHsQTyVars lConDecls options srcSpan = do
             (Hs.app
               srcSpan
               (Hs.qualVar srcSpan swagger $ Ghc.mkDataOcc "NamedSchema")
-              (Hs.qualVar srcSpan dataMaybe $ Ghc.mkDataOcc "Nothing")
+              . Hs.par srcSpan
+              . Hs.app srcSpan (Hs.qualVar srcSpan dataMaybe $ Ghc.mkDataOcc "Just")
+              . Hs.par srcSpan
+              . Hs.app srcSpan (Hs.qualVar srcSpan text $ Ghc.mkVarOcc "pack")
+              . Hs.lit srcSpan
+              . Hs.string
+              . Ghc.occNameString
+              . Ghc.rdrNameOcc
+              $ Type.name type_
             )
         . Hs.par srcSpan
         . makePipeline srcSpan lens [setType, setProperties, setRequired]
