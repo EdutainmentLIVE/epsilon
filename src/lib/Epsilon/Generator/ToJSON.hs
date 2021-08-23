@@ -13,7 +13,7 @@ import qualified Epsilon.Type.Type as Type
 import qualified GhcPlugins as Ghc
 
 generate :: Common.Generator
-generate lIdP lHsQTyVars lConDecls options srcSpan = do
+generate _ lIdP lHsQTyVars lConDecls options srcSpan = do
   type_ <- Type.make lIdP lHsQTyVars lConDecls srcSpan
   case Type.constructors type_ of
     [_] -> pure ()

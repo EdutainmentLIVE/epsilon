@@ -25,7 +25,8 @@ import qualified System.Random as Random
 import qualified Text.Printf as Printf
 
 type Generator
-  = Ghc.LIdP Ghc.GhcPs
+  = Ghc.ModuleName
+  -> Ghc.LIdP Ghc.GhcPs
   -> Ghc.LHsQTyVars Ghc.GhcPs
   -> [Ghc.LConDecl Ghc.GhcPs]
   -> [String]
