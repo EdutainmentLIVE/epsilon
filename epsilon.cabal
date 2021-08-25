@@ -1,9 +1,15 @@
 cabal-version: >= 1.10
 
 name: epsilon
-version: 0.2021.8.20
+version: 0.2021.8.25
+synopsis: A GHC plugin to derive instances.
+description: Epsilon is a GHC plugin to derive instances.
 
 build-type: Simple
+category: Plugin
+license-file: LICENSE.txt
+license: MIT
+maintainer: ACI Learning
 
 library
   build-depends:
